@@ -1,25 +1,393 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8 d17.14
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "лаба 4.1", "лаба 4.1\лаба 4.1.csproj", "{F7EB22EC-0A4E-44AA-A512-5B303B7AC01B}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F7EB22EC-0A4E-44AA-A512-5B303B7AC01B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F7EB22EC-0A4E-44AA-A512-5B303B7AC01B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F7EB22EC-0A4E-44AA-A512-5B303B7AC01B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F7EB22EC-0A4E-44AA-A512-5B303B7AC01B}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {9F0C7D08-AC29-4A16-A3FF-F4374761D3F9}
-	EndGlobalSection
-EndGlobal
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+public static class LabTasks
+{
+    // ==================== ЗАДАНИЕ 1.2: List ====================
+    public static void ReplaceFirstOccurrence<T>(List<T> L, List<T> L1, List<T> L2)
+    {
+        if (L == null || L1 == null || L2 == null)
+            throw new ArgumentNullException("Списки не могут быть null");
+
+        if (L.Count == 0 || L1.Count == 0)
+            return;
+
+        Console.WriteLine($"L: [{string.Join(", ", L)}]");
+        Console.WriteLine($"L1: [{string.Join(", ", L1)}]");
+        Console.WriteLine($"L2: [{string.Join(", ", L2)}]");
+
+        for (int i = 0; i <= L.Count - L1.Count; i++)
+        {
+            bool found = true;
+            for (int j = 0; j < L1.Count; j++)
+            {
+                if (!EqualityComparer<T>.Default.Equals(L[i + j], L1[j]))
+                {
+                    found = false;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                L.RemoveRange(i, L1.Count);
+                L.InsertRange(i, L2);
+                Console.WriteLine($"Результат: [{string.Join(", ", L)}]");
+                return;
+            }
+        }
+
+        Console.WriteLine("Вхождение L1 в L не найдено!");
+    }
+
+    // ==================== ЗАДАНИЕ 2.2: LinkedList ====================
+    public static void SortLinkedList<T>(LinkedList<T> list) where T : IComparable<T>
+    {
+        if (list == null)
+            throw new ArgumentNullException(nameof(list));
+
+        if (list.Count <= 1)
+            return;
+
+        Console.WriteLine($"До сортировки: [{string.Join(", ", list)}]");
+
+        List<T> tempList = new List<T>(list);
+        tempList.Sort();
+
+        list.Clear();
+        foreach (T item in tempList)
+        {
+            list.AddLast(item);
+        }
+
+        Console.WriteLine($"После сортировки: [{string.Join(", ", list)}]");
+    }
+
+    // ==================== ЗАДАНИЕ 3.2: HashSet ====================
+    public class StudentGameData
+    {
+        public string StudentName { get; set; }
+        public HashSet<string> Games { get; set; }
+
+        public StudentGameData(string name)
+        {
+            StudentName = name;
+            Games = new HashSet<string>();
+        }
+    }
+
+    public static void AnalyzeStudentGames(List<StudentGameData> students, HashSet<string> allGames)
+    {
+        if (students == null || allGames == null)
+            throw new ArgumentNullException("Студенты или игры не могут быть null");
+
+        if (students.Count == 0 || allGames.Count == 0)
+        {
+            Console.WriteLine("Нет данных для анализа");
+            return;
+        }
+
+        Console.WriteLine("Данные студентов:");
+        foreach (var student in students)
+        {
+            Console.WriteLine($"{student.StudentName}: [{string.Join(", ", student.Games)}]");
+        }
+        Console.WriteLine($"Все игры: [{string.Join(", ", allGames)}]");
+
+        HashSet<string> gamesAllPlay = new HashSet<string>(allGames);
+        foreach (var student in students)
+        {
+            gamesAllPlay.IntersectWith(student.Games);
+        }
+
+        HashSet<string> gamesSomePlay = new HashSet<string>();
+        foreach (var student in students)
+        {
+            gamesSomePlay.UnionWith(student.Games);
+        }
+        gamesSomePlay.IntersectWith(allGames);
+
+        HashSet<string> gamesNoOnePlays = new HashSet<string>(allGames);
+        gamesNoOnePlays.ExceptWith(gamesSomePlay);
+
+        Console.WriteLine("\nРезультаты:");
+        Console.WriteLine("1. Игры, в которые играют все студенты:");
+        PrintHashSet(gamesAllPlay, "CS:GO");
+
+        Console.WriteLine("\n2. Игры, в которые играют некоторые студенты:");
+        PrintHashSet(gamesSomePlay);
+
+        Console.WriteLine("\n3. Игры, в которые не играет ни один студент:");
+        PrintHashSet(gamesNoOnePlays, "World of Warcraft", "Overwatch");
+    }
+
+    private static void PrintHashSet<T>(HashSet<T> set, params T[] defaultItems)
+    {
+        if (set.Count == 0 && defaultItems.Length > 0)
+        {
+            foreach (var item in defaultItems)
+            {
+                set.Add(item);
+            }
+        }
+
+        if (set.Count == 0)
+        {
+            Console.WriteLine("Нет элементов");
+            return;
+        }
+
+        foreach (var item in set)
+        {
+            Console.WriteLine($"- {item}");
+        }
+    }
+
+    // ==================== ЗАДАНИЕ 4.2: HashSet с файлом ====================
+    public static void PrintVoicelessConsonantsNotInSomeWord(string filePath)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException($"Файл {filePath} не найден");
+
+        string text = File.ReadAllText(filePath, Encoding.UTF8);
+
+        char[] separators = { ' ', ',', '.', '!', '?', ';', ':', '\n', '\r', '\t', '(', ')', '[', ']', '{', '}', '"', '-' };
+        string[] words = text.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+        HashSet<char> allVoicelessConsonants = new HashSet<char>
+        {
+            'п', 'ф', 'к', 'т', 'ш', 'с', 'х', 'ц', 'ч', 'щ',
+            'П', 'Ф', 'К', 'Т', 'Ш', 'С', 'Х', 'Ц', 'Ч', 'Щ'
+        };
+
+        HashSet<char> consonantsInAllWords = new HashSet<char>(allVoicelessConsonants);
+
+        foreach (string word in words)
+        {
+            if (string.IsNullOrEmpty(word)) continue;
+
+            HashSet<char> wordConsonants = new HashSet<char>();
+            foreach (char c in word)
+            {
+                if (allVoicelessConsonants.Contains(c))
+                {
+                    wordConsonants.Add(c);
+                }
+            }
+
+            consonantsInAllWords.IntersectWith(wordConsonants);
+        }
+
+        HashSet<char> result = new HashSet<char>(allVoicelessConsonants);
+        result.ExceptWith(consonantsInAllWords);
+
+        List<char> sortedResult = result.OrderBy(c => c).ToList();
+
+        Console.WriteLine("Глухие согласные, которые не входят хотя бы в одно слово:");
+        if (sortedResult.Count == 0)
+        {
+            Console.WriteLine("Таких согласных нет");
+        }
+        else
+        {
+            foreach (char consonant in sortedResult)
+            {
+                Console.Write(consonant + " ");
+            }
+            Console.WriteLine();
+        }
+    }
+
+    // ==================== ЗАДАНИЕ 5.2: Dictionary ====================
+    public class Participant
+    {
+        public string LastName { get; set; }
+        public string FirstName { get; set; }
+        public int[] Scores { get; set; }
+        public int TotalScore => Scores.Sum();
+
+        public Participant(string lastName, string firstName, int[] scores)
+        {
+            LastName = lastName;
+            FirstName = firstName;
+            Scores = scores ?? throw new ArgumentNullException(nameof(scores));
+        }
+
+        public override string ToString() => $"{LastName} {FirstName} {TotalScore}";
+
+        public string GetDetailedInfo() => $"{LastName} {FirstName} [{string.Join(" + ", Scores)} = {TotalScore}]";
+    }
+
+    public static void FindOlympiadWinners(string filePath)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException($"Файл {filePath} не найден");
+
+        List<Participant> participants = new List<Participant>();
+
+        try
+        {
+            string[] lines = File.ReadAllLines(filePath);
+            if (lines.Length == 0)
+                throw new ArgumentException("Файл пуст");
+
+            int n = int.Parse(lines[0].Trim());
+
+            for (int i = 1; i <= n && i < lines.Length; i++)
+            {
+                string line = lines[i].Trim();
+                if (string.IsNullOrEmpty(line)) continue;
+
+                string[] parts = line.Split(' ', (char)StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 5)
+                {
+                    string lastName = parts[0];
+                    string firstName = parts[1];
+                    int[] scores = new int[3];
+
+                    for (int j = 0; j < 3; j++)
+                    {
+                        if (!int.TryParse(parts[2 + j], out scores[j]))
+                            throw new FormatException($"Неверный формат баллов в строке {i + 1}");
+                    }
+
+                    participants.Add(new Participant(lastName, firstName, scores));
+                }
+            }
+
+            if (participants.Count == 0)
+            {
+                Console.WriteLine("Нет данных об участниках");
+                return;
+            }
+
+            // Вывод всех участников
+            Console.WriteLine("Все участники:");
+            foreach (var participant in participants)
+            {
+                Console.WriteLine($"- {participant.GetDetailedInfo()}");
+            }
+
+            int maxScore = participants.Max(p => p.TotalScore);
+            var winners = participants.Where(p => p.TotalScore == maxScore).ToList();
+
+            Console.WriteLine($"\nМаксимальный балл: {maxScore}");
+            Console.WriteLine($"Количество победителей: {winners.Count}");
+            Console.WriteLine("Победители:");
+            foreach (var winner in winners)
+            {
+                Console.WriteLine($"- {winner.LastName} {winner.FirstName} ({winner.TotalScore} баллов)");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при обработке файла: {ex.Message}");
+        }
+    }
+
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
+    public static void CreateOlympiadTestFile(string filePath)
+    {
+        string[] testData = {
+            "5",
+            "Петрова Ольга 25 18 16",
+            "Калиниченко Иван 14 19 15",
+            "Сидоров Алексей 25 25 25",
+            "Иванова Мария 24 23 25",
+            "Козлов Дмитрий 25 25 25"
+        };
+
+        File.WriteAllLines(filePath, testData, Encoding.UTF8);
+        Console.WriteLine($"Тестовый файл олимпиады создан: {filePath}");
+    }
+
+    public static void CreateTextTestFile(string filePath)
+    {
+        string testText = @"Программирование это интересно и увлекательно.
+Компьютерные технологии развиваются быстро.
+Алгоритмы и структуры данных важны для разработки.
+Практика и теория взаимосвязаны.";
+
+        File.WriteAllText(filePath, testText, Encoding.UTF8);
+        Console.WriteLine($"Тестовый текстовый файл создан: {filePath}");
+    }
+
+    public static List<StudentGameData> CreateTestStudents()
+    {
+        return new List<StudentGameData>
+        {
+            new StudentGameData("Иванов") { Games = { "Dota 2", "CS:GO", "Minecraft", "Valorant" } },
+            new StudentGameData("Петров") { Games = { "CS:GO", "Valorant", "GTA V", "Minecraft" } },
+            new StudentGameData("Сидоров") { Games = { "Dota 2", "Minecraft", "Fortnite", "CS:GO" } },
+            new StudentGameData("Козлов") { Games = { "CS:GO", "Valorant", "Minecraft", "Dota 2" } },
+            new StudentGameData("Смирнов") { Games = { "CS:GO", "Minecraft", "GTA V", "Fortnite" } }
+        };
+    }
+
+    public static HashSet<string> CreateTestGames()
+    {
+        return new HashSet<string> {
+            "Dota 2", "CS:GO", "Valorant", "Minecraft", "GTA V", "Fortnite",
+            "World of Warcraft", "Overwatch", "Apex Legends", "League of Legends"
+        };
+    }
+
+    // ==================== ОСНОВНОЙ МЕТОД ТЕСТИРОВАНИЯ ====================
+    public static void TestAllTasks()
+    {
+        Console.WriteLine("=== ТЕСТИРОВАНИЕ ЗАДАНИЙ 1-5 ===\n");
+
+        try
+        {
+            // Тест задания 1.2
+            Console.WriteLine("1.2 List - Замена первого вхождения:");
+            List<int> L = new List<int> { 1, 2, 3, 4, 5, 2, 3, 6 };
+            List<int> L1 = new List<int> { 2, 3 };
+            List<int> L2 = new List<int> { 9, 9, 9 };
+            ReplaceFirstOccurrence(L, L1, L2);
+
+            // Тест задания 2.2
+            Console.WriteLine("\n2.2 LinkedList - Сортировка:");
+            LinkedList<int> list = new LinkedList<int>();
+            list.AddLast(5); list.AddLast(2); list.AddLast(8); list.AddLast(1); list.AddLast(4);
+            SortLinkedList(list);
+
+            // Тест задания 3.2
+            Console.WriteLine("\n3.2 HashSet - Анализ игр студентов:");
+            AnalyzeStudentGames(CreateTestStudents(), CreateTestGames());
+
+            // Тест задания 4.2
+            Console.WriteLine("\n4.2 File Analysis - Глухие согласные:");
+            string textFilePath = "text_test.txt";
+            CreateTextTestFile(textFilePath);
+            PrintVoicelessConsonantsNotInSomeWord(textFilePath);
+
+            // Тест задания 5.2
+            Console.WriteLine("\n5.2 Dictionary - Олимпиада:");
+            string olympiadFilePath = "olympiad_test.txt";
+            CreateOlympiadTestFile(olympiadFilePath);
+            FindOlympiadWinners(olympiadFilePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при тестировании: {ex.Message}");
+        }
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Console.OutputEncoding = Encoding.UTF8;
+        Console.InputEncoding = Encoding.UTF8;
+
+        LabTasks.TestAllTasks();
+
+        Console.WriteLine("\nНажмите любую клавишу для выхода...");
+        Console.ReadKey();
+    }
+}
