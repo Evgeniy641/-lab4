@@ -1,25 +1,231 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8 d17.14
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "лаба 6", "лаба 6\лаба 6.csproj", "{DBA2F5A6-59A0-4540-A28B-19DD7CD8F8F2}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DBA2F5A6-59A0-4540-A28B-19DD7CD8F8F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DBA2F5A6-59A0-4540-A28B-19DD7CD8F8F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DBA2F5A6-59A0-4540-A28B-19DD7CD8F8F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DBA2F5A6-59A0-4540-A28B-19DD7CD8F8F2}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {B676F9D1-A3A5-4AA4-814C-0F78FB5C5F71}
-	EndGlobalSection
-EndGlobal
+using System;
+using System.Text;
+using System.Collections.Generic;
+
+// Интерфейс для объектов, способных мяукать
+public interface IMeowable
+{
+    void Meow();
+}
+
+// Класс Кота, реализующий интерфейс IMeowable
+public class Cat : IMeowable
+{
+    // Свойство для хранения имени кота
+    public string Name { get; }
+
+    // Счетчик мяуканий (приватное поле)
+    private int meowCount;
+
+    // Конструктор, принимающий имя кота
+    public Cat(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Имя кота не может быть пустым");
+
+        Name = name;
+        meowCount = 0;
+    }
+
+    // Реализация метода интерфейса IMeowable - одиночное мяуканье
+    public void Meow()
+    {
+        Console.WriteLine($"{Name}: мяу!");
+        meowCount++;
+    }
+
+    // Метод для мяуканья N раз
+    public void Meow(int n)
+    {
+        // Проверка корректности входного параметра
+        if (n <= 0)
+            throw new ArgumentException("Количество мяуканий должно быть положительным числом");
+
+        // Создаем строку, где каждый "мяу" разделен дефисом
+        var result = new StringBuilder();
+
+        for (int i = 0; i < n; i++)
+        {
+            result.Append("мяу");
+
+            // Добавляем дефис после каждого "мяу", кроме последнего
+            if (i < n - 1)
+            {
+                result.Append("-");
+            }
+        }
+
+        // Выводим результат
+        Console.WriteLine($"{Name}: {result}!");
+        meowCount += n;
+    }
+
+    // Метод для получения количества мяуканий
+    public int GetMeowCount()
+    {
+        return meowCount;
+    }
+
+    // Метод для сброса счетчика
+    public void ResetMeowCount()
+    {
+        meowCount = 0;
+    }
+
+    // Метод для приведения к текстовой форме
+    public override string ToString()
+    {
+        return $"кот: {Name}";
+    }
+}
+
+// Другой класс, который также может мяукать
+public class RobotCat : IMeowable
+{
+    public string Model { get; }
+
+    public RobotCat(string model)
+    {
+        Model = model;
+    }
+
+    // Реализация метода интерфейса IMeowable
+    public void Meow()
+    {
+        Console.WriteLine($"{Model} (робокот): бип-мяу!");
+    }
+
+    public override string ToString()
+    {
+        return $"робокот: {Model}";
+    }
+}
+
+// Класс для тестирования
+public class MeowTester
+{
+    // Метод, который принимает набор объектов, способных мяукать, и количество повторений
+    public static void MakeAllMeow(IEnumerable<IMeowable> meowableObjects, int repeatCount = 1)
+    {
+        Console.WriteLine($"\nВсе объекты мяукают (повторений: {repeatCount}):");
+
+        for (int repeat = 1; repeat <= repeatCount; repeat++)
+        {
+            if (repeatCount > 1)
+            {
+                Console.WriteLine($"\n--- Повторение #{repeat} ---");
+            }
+
+            int count = 1;
+            foreach (var obj in meowableObjects)
+            {
+                Console.Write($"{count}. ");
+                obj.Meow();
+                count++;
+            }
+        }
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Console.OutputEncoding = Encoding.UTF8;
+
+        // Часть 1: Тестирование оригинальной функциональности кота
+        Console.WriteLine("=== Тестирование кота ===");
+
+        // Ввод имени кота
+        Console.Write("Введите имя кота: ");
+        string catName = Console.ReadLine();
+
+        // Создаем кота с введенным именем
+        var cat = new Cat(catName);
+
+        // Выводим кота в текстовой форме
+        Console.WriteLine(cat);
+
+        // Ввод количества мяуканий 
+        Console.Write("Сколько раз кот должен помяукать? ");
+        int meowCount;
+        while (!int.TryParse(Console.ReadLine(), out meowCount) || meowCount <= 0)
+        {
+            Console.Write("Пожалуйста, введите положительное число: ");
+        }
+
+        // Кот мяукает N раз
+        cat.Meow(meowCount);
+
+        // Часть 2: Тестирование интерфейса и нового метода с подсчетом
+        Console.WriteLine("\n=== Тестирование интерфейса IMeowable ===");
+
+        // Создаем коллекцию для хранения мяукающих объектов
+        List<IMeowable> meowableObjects = new List<IMeowable>();
+
+        // Добавляем первого кота, которого уже создали
+        meowableObjects.Add(cat);
+        Console.WriteLine($"Первый кот '{cat.Name}' автоматически добавлен в коллекцию.");
+
+        // Ввод дополнительных котов пользователем
+        Console.WriteLine("\nСколько дополнительных котов вы хотите создать? ");
+        int additionalCatCount;
+        while (!int.TryParse(Console.ReadLine(), out additionalCatCount) || additionalCatCount < 0)
+        {
+            Console.Write("Пожалуйста, введите неотрицательное число: ");
+        }
+
+        for (int i = 0; i < additionalCatCount; i++)
+        {
+            Console.Write($"Введите имя дополнительного кота #{i + 1}: ");
+            string name = Console.ReadLine();
+            meowableObjects.Add(new Cat(name));
+        }
+
+        // Ввод робокотов пользователем
+        Console.WriteLine("\nСколько робокотов вы хотите создать? ");
+        int robotCatCount;
+        while (!int.TryParse(Console.ReadLine(), out robotCatCount) || robotCatCount < 0)
+        {
+            Console.Write("Пожалуйста, введите неотрицательное число: ");
+        }
+
+        for (int i = 0; i < robotCatCount; i++)
+        {
+            Console.Write($"Введите модель робокота #{i + 1}: ");
+            string model = Console.ReadLine();
+            meowableObjects.Add(new RobotCat(model));
+        }
+
+        // Проверка, что есть хотя бы один объект
+        if (meowableObjects.Count == 0)
+        {
+            Console.WriteLine("Не создано ни одного мяукающего объекта!");
+        }
+        else
+        {
+            // Ввод количества повторений для общего мяукания
+            Console.Write("\nСколько раз все объекты должны мяукать? ");
+            int repeatCount;
+            while (!int.TryParse(Console.ReadLine(), out repeatCount) || repeatCount <= 0)
+            {
+                Console.Write("Пожалуйста, введите положительное число: ");
+            }
+
+            // Сбрасываем счетчик мяуканий у первого кота
+            cat.ResetMeowCount();
+
+            // Выводим начальное количество мяуканий
+            Console.WriteLine($"\nПеред вызовом метода. Количество мяуканий кота {cat.Name}: {cat.GetMeowCount()}");
+
+            // Вызываем мяуканье у всех объектов с указанным количеством повторений
+            MeowTester.MakeAllMeow(meowableObjects, repeatCount);
+
+            // Выводим количество мяуканий после теста
+            Console.WriteLine($"\nПосле вызова метода. Кот {cat.Name} мяукал {cat.GetMeowCount()} раз(а)");
+        }
+
+        Console.WriteLine("\nНажмите любую клавишу для выхода...");
+        Console.ReadKey();
+    }
+}
