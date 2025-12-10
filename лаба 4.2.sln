@@ -1,25 +1,227 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8 d17.14
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "лаба 4.2", "лаба 4.2\лаба 4.2.csproj", "{C4254065-88E9-4772-B272-963C0534C95B}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C4254065-88E9-4772-B272-963C0534C95B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C4254065-88E9-4772-B272-963C0534C95B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C4254065-88E9-4772-B272-963C0534C95B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C4254065-88E9-4772-B272-963C0534C95B}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {9B41470C-B3DD-4397-8DA9-47DE03FB007E}
-	EndGlobalSection
-EndGlobal
+using System;
+
+namespace MoneyApp
+{
+    public class Money
+    {
+        private uint _rubles;
+        private byte _kopeks;
+
+        // Свойства с валидацией
+        public uint Rubles
+        {
+            get => _rubles;
+            private set => _rubles = value;
+        }
+
+        public byte Kopeks
+        {
+            get => _kopeks;
+            private set
+            {
+                if (value >= 100)
+                    throw new ArgumentException("Копейки должны быть от 0 до 99");
+                _kopeks = value;
+            }
+        }
+
+        // Конструкторы
+        public Money() : this(0, 0) { }
+
+        public Money(uint rubles, byte kopeks)
+        {
+            Rubles = rubles;
+            Kopeks = kopeks;
+            Normalize();
+        }
+
+        // Метод из задания 6
+        public Money AddKopeks(uint kopeksToAdd)
+        {
+            if (kopeksToAdd > uint.MaxValue - TotalKopeks)
+                throw new OverflowException("Слишком большое количество копеек для добавления");
+
+            uint totalKopeks = TotalKopeks + kopeksToAdd;
+            uint newRubles = totalKopeks / 100;
+            byte newKopeks = (byte)(totalKopeks % 100);
+
+            if (newRubles > uint.MaxValue)
+                throw new OverflowException("Превышено максимальное количество рублей");
+
+            return new Money(newRubles, newKopeks);
+        }
+
+        // Вспомогательные методы
+        private uint TotalKopeks => Rubles * 100 + Kopeks;
+
+        private void Normalize()
+        {
+            if (Kopeks >= 100)
+            {
+                Rubles += (uint)(Kopeks / 100);
+                Kopeks = (byte)(Kopeks % 100);
+            }
+        }
+
+        // Перегрузка ToString()
+        public override string ToString()
+        {
+            return $"{Rubles} руб. {Kopeks:D2} коп.";
+        }
+
+        // ========== ЗАДАНИЕ 7 ==========
+
+        // Унарные операции
+        public static Money operator ++(Money money)
+        {
+            return money.AddKopeks(1);
+        }
+
+        public static Money operator --(Money money)
+        {
+            if (money.TotalKopeks == 0)
+                throw new InvalidOperationException("Нельзя уменьшить нулевую сумму");
+
+            uint totalKopeks = money.TotalKopeks - 1;
+            uint newRubles = totalKopeks / 100;
+            byte newKopeks = (byte)(totalKopeks % 100);
+            return new Money(newRubles, newKopeks);
+        }
+
+        // Операции приведения типа
+        public static explicit operator uint(Money money)
+        {
+            return money.Rubles;
+        }
+
+        public static implicit operator double(Money money)
+        {
+            return money.Kopeks / 100.0;
+        }
+
+        // Бинарные операции
+        public static Money operator +(Money money, uint kopeks)
+        {
+            return money.AddKopeks(kopeks);
+        }
+
+        public static Money operator +(uint kopeks, Money money)
+        {
+            return money + kopeks;
+        }
+
+        public static Money operator -(Money money, uint kopeks)
+        {
+            if (kopeks > money.TotalKopeks)
+                throw new InvalidOperationException("Результат не может быть отрицательным");
+
+            uint totalKopeks = money.TotalKopeks - kopeks;
+            uint newRubles = totalKopeks / 100;
+            byte newKopeks = (byte)(totalKopeks % 100);
+            return new Money(newRubles, newKopeks);
+        }
+
+        public static Money operator -(uint kopeks, Money money)
+        {
+            if (kopeks < money.TotalKopeks)
+                throw new InvalidOperationException("Результат не может быть отрицательным");
+
+            uint totalKopeks = kopeks - money.TotalKopeks;
+            uint newRubles = totalKopeks / 100;
+            byte newKopeks = (byte)(totalKopeks % 100);
+            return new Money(newRubles, newKopeks);
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("=== ТЕСТИРОВАНИЕ КЛАССА Money ===");
+
+            try
+            {
+                // Тестирование конструкторов
+                Console.WriteLine("\n1. Тестирование конструкторов:");
+                Money m1 = new Money();
+                Console.WriteLine($"Конструктор по умолчанию: {m1}");
+
+                Money m2 = new Money(150, 75);
+                Console.WriteLine($"Конструктор с параметрами (150, 75): {m2}");
+
+                // Тестирование метода AddKopeks из задания 6
+                Console.WriteLine("\n2. Тестирование метода AddKopeks:");
+                Money m3 = new Money(10, 50);
+                Console.WriteLine($"Исходная сумма: {m3}");
+                Money m4 = m3.AddKopeks(75);
+                Console.WriteLine($"После добавления 75 копеек: {m4}");
+                Money m5 = m3.AddKopeks(150);
+                Console.WriteLine($"После добавления 150 копеек: {m5}");
+
+                // Тестирование унарных операций
+                Console.WriteLine("\n3. Тестирование унарных операций:");
+                Money m6 = new Money(5, 99);
+                Console.WriteLine($"Исходная сумма: {m6}");
+                m6++;
+                Console.WriteLine($"После m6++: {m6}");
+                m6--;
+                Console.WriteLine($"После m6--: {m6}");
+
+                // Тестирование операций приведения типа
+                Console.WriteLine("\n4. Тестирование операций приведения типа:");
+                Money m7 = new Money(123, 45);
+                Console.WriteLine($"Сумма: {m7}");
+                uint rublesOnly = (uint)m7;
+                Console.WriteLine($"Явное приведение к uint (только рубли): {rublesOnly}");
+                double kopeksInRubles = m7;
+                Console.WriteLine($"Неявное приведение к double (копейки в рублях): {kopeksInRubles:F2}");
+
+                // Тестирование бинарных операций
+                Console.WriteLine("\n5. Тестирование бинарных операций:");
+                Money m8 = new Money(100, 30);
+                Console.WriteLine($"Исходная сумма: {m8}");
+
+                Money m9 = m8 + 50;
+                Console.WriteLine($"m8 + 50 копеек: {m9}");
+
+                Money m10 = 80 + m8;
+                Console.WriteLine($"80 копеек + m8: {m10}");
+
+                Money m11 = m8 - 30;
+                Console.WriteLine($"m8 - 30 копеек: {m11}");
+
+                Money m12 = 200 - m8;
+                Console.WriteLine($"200 копеек - m8: {m12}");
+
+                // Тестирование обработки ошибок
+                Console.WriteLine("\n6. Тестирование обработки ошибок:");
+                try
+                {
+                    Money badMoney = new Money(0, 150); // Должно нормализоваться
+                    Console.WriteLine($"Нормализация 150 копеек: {badMoney}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Ошибка: {ex.Message}");
+                }
+
+                try
+                {
+                    Money zeroMoney = new Money(0, 0);
+                    zeroMoney--;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Попытка уменьшить 0: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Произошла ошибка: {ex.Message}");
+            }
+
+            Console.WriteLine("\nТестирование завершено!");
+            Console.ReadKey();
+        }
+    }
+}
